@@ -6,6 +6,7 @@ import Layout from './components/Layout';
 // Public pages
 import LandingPage       from './pages/LandingPage';
 import LoginPage         from './pages/LoginPage';
+import SignUpPage        from './pages/SignUpPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import AccessDenied      from './pages/AccessDenied';
 
@@ -29,6 +30,7 @@ export default function App() {
           {/* ── Public ─────────────────────────────── */}
           <Route path="/"               element={<LandingPage />} />
           <Route path="/login"          element={<LoginPage />} />
+          <Route path="/signup"         element={<SignUpPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/403"            element={<AccessDenied />} />
 

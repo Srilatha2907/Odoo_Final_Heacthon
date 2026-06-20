@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, Mail, Eye, EyeOff, ArrowLeft, AlertCircle } from 'lucide-react';
@@ -23,7 +23,7 @@ const DEMO = {
 };
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
   const navigate   = useNavigate();
   const location   = useLocation();
   const from       = location.state?.from || null;
@@ -35,11 +35,18 @@ export default function LoginPage() {
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState('');
 
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      navigate(from || ROLE_HOME[user.role] || '/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, user, navigate, from]);
+
   const selectedInfo = ROLES.find(r => r.value === selectedRole);
 
   const handleRoleSelect = (role) => {
     setSelectedRole(role);
-    setForm(f => ({ ...f, ...DEMO[role] }));
+    setForm(f => ({ ...f, email: '', password: '' })); // Leave fields empty!
     setError('');
   };
 
@@ -111,8 +118,10 @@ export default function LoginPage() {
                   onClick={handleContinue} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}>
                   Continue →
                 </motion.button>
-                <p style={{ textAlign: 'center', marginTop: 14, fontSize: 12, color: 'var(--text-muted)' }}>
-                  <Link to="/" style={{ color: 'var(--accent-teal)', textDecoration: 'none' }}>← Back to Home</Link>
+                <p style={{ textAlign: 'center', marginTop: 14, fontSize: 12, color: 'var(--text-muted)', display: 'flex', justifyContent: 'center', gap: 12 }}>
+                  <Link to="/" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>← Back to Home</Link>
+                  <span>·</span>
+                  <Link to="/signup" style={{ color: 'var(--accent-blue)', textDecoration: 'none', fontWeight: 600 }}>Create Account</Link>
                 </p>
               </motion.div>
             )}
@@ -181,8 +190,8 @@ export default function LoginPage() {
                   </motion.button>
                 </form>
 
-                <p style={{ textAlign: 'center', marginTop: 16, fontSize: 11, color: 'var(--text-muted)' }}>
-                  Demo credentials are pre-filled above
+                <p style={{ textAlign: 'center', marginTop: 16, fontSize: 12, color: 'var(--text-secondary)' }}>
+                  Don't have an account? <Link to="/signup" style={{ color: 'var(--accent-blue)', textDecoration: 'none', fontWeight: 600 }}>Sign Up</Link>
                 </p>
               </motion.div>
             )}
