@@ -22,10 +22,11 @@ export default function Topbar({ title, subtitle, onRefresh, toggleSidebar }) {
 
   return (
     <header className="topbar">
-      <div className="topbar-left" style={{ display: 'flex', alignItems: 'center' }}>
+      <div className="topbar-left" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
         <button onClick={toggleSidebar} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8 }}>
           <Menu size={24} />
         </button>
+        <h2 style={{ fontSize: 20, color: 'var(--text-primary)', margin: 0, fontWeight: 800, letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>Master Menu</h2>
       </div>
 
       <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 10 }}>

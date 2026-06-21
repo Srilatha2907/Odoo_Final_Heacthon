@@ -38,10 +38,7 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
       transition={{ type: 'spring', stiffness: 260, damping: 30 }}
       style={{ overflowX: 'hidden' }}>
 
-      {/* Logo */}
-      <div className="sidebar-logo" style={{ padding: isOpen ? '24px 20px 12px 20px' : '24px 0 12px 0', display: 'flex', alignItems: 'center', justifyContent: isOpen ? 'flex-start' : 'center', gap: 12 }}>
-        {isOpen ? <h2 style={{ fontSize: 20, color: 'var(--text-primary)', margin: 0, fontWeight: 800, letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>Master Menu</h2> : <div style={{ fontSize: 20, fontWeight: 800 }}>☰</div>}
-      </div>
+
 
       {/* Role badge */}
       <div style={{ padding: isOpen ? '10px 16px' : '10px 8px', borderBottom: '1px solid var(--glass-border)' }}>
