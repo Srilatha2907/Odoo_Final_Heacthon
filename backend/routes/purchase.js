@@ -114,6 +114,7 @@ router.patch('/:id/receive', async (req, res) => {
 
     await client.query('UPDATE purchase_orders SET status = $1 WHERE id = $2', ['RECEIVED', req.params.id]);
     await client.query('COMMIT');
+
     res.json({ message: 'Goods received, stock updated' });
   } catch (err) {
     await client.query('ROLLBACK');

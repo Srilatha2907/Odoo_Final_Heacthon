@@ -6,8 +6,23 @@ const pool = require('../db');
 router.get('/', async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT mo.*, p.name as product_name
-       FROM manufacturing_orders mo JOIN products p ON p.id = mo.product_id
+      `SELECT mo.*, p.name as product_name,
+        COALESCE(
+          (SELECT json_agg(json_build_object(
+            'component_id', bc.component_id,
+            'component_name', p2.name,
+            'quantity', bc.quantity,
+            'quantity_needed', bc.quantity * mo.quantity,
+            'on_hand_qty', p2.on_hand_qty
+          ))
+          FROM bom b
+          JOIN bom_components bc ON bc.bom_id = b.id
+          JOIN products p2 ON p2.id = bc.component_id
+          WHERE b.product_id = mo.product_id
+          ), '[]'::json
+        ) as components
+       FROM manufacturing_orders mo 
+       JOIN products p ON p.id = mo.product_id
        ORDER BY mo.created_at DESC`
     );
     res.json(result.rows);

@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { CheckCircle, XCircle, Info } from 'lucide-react';
+import { CheckCircle, XCircle, Info, AlertTriangle } from 'lucide-react';
 
-const ICONS = { success: <CheckCircle size={15} />, error: <XCircle size={15} />, info: <Info size={15} /> };
+const ICONS = { success: <CheckCircle size={15} />, error: <XCircle size={15} />, info: <Info size={15} />, warning: <AlertTriangle size={15} /> };
 
 export default function Toast({ toasts = [] }) {
   return (

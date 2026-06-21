@@ -35,13 +35,31 @@ export default function SalesPage() {
 
   const handleCreate = async (form) => {
     setSaving(true);
-    try { await api.post('/sales', form); toast.success('Sales order created!'); setShowCreate(false); load(); }
+    try { 
+      const res = await api.post('/sales', form); 
+      if (res.data?.missingStock) {
+        toast.warning(res.data.autoMessage || 'Sales order created with shortages.');
+      } else {
+        toast.success(res.data?.autoMessage || 'Sales order created and confirmed!');
+      }
+      setShowCreate(false); 
+      load(); 
+    }
     catch (err) { toast.error(err.response?.data?.error || 'Failed'); }
     finally { setSaving(false); }
   };
 
   const handleAction = async (id, action, msg) => {
-    try { await api.patch(`/sales/${id}/${action}`); toast.success(msg); load(); }
+    try { 
+      const res = await api.patch(`/sales/${id}/${action}`); 
+      // Orchestrator returns detailed messages about shortages vs delivery
+      const finalMsg = res.data?.message || msg;
+      
+      if (res.data?.missingStock) toast.warning(finalMsg);
+      else toast.success(finalMsg);
+      
+      load(); 
+    }
     catch (err) { toast.error(err.response?.data?.error || `Failed to ${action}`); }
   };
 
@@ -141,6 +159,8 @@ export default function SalesPage() {
                   const items = (o.items||[]).filter(it=>it.product_id);
                   const total = items.reduce((s,it)=>s+Number(it.sales_price||0)*Number(it.quantity),0);
                   const isExp = expanded===o.id;
+                  const canDeliver = items.every(it => Number(it.on_hand_qty || 0) >= Number(it.quantity));
+
                   return (
                     <AnimatePresence key={o.id}>
                       <motion.tr initial={{ opacity:0,x:-10 }} animate={{ opacity:1,x:0 }} transition={{ delay:i*0.04 }}>
@@ -153,11 +173,15 @@ export default function SalesPage() {
                         <td>
                           <div style={{ display:'flex', gap:5 }}>
                             {o.status==='DRAFT' && <>
-                              <motion.button className="btn btn-primary btn-xs" whileHover={{ scale:1.05 }} onClick={()=>handleAction(o.id,'automate','✨ Auto-Fulfilled & Delivered!')}><CheckCircle2 size={12}/> Auto-Fulfill</motion.button>
+                              <motion.button className="btn btn-primary btn-xs" whileHover={{ scale:1.05 }} onClick={()=>handleAction(o.id,'confirm','Order Confirmed!')}><CheckCircle2 size={12}/> Confirm</motion.button>
                               <motion.button className="btn btn-ghost btn-xs" whileHover={{ scale:1.05 }} onClick={()=>handleAction(o.id,'cancel','Cancelled')} style={{ color:'var(--accent-red)' }}><XCircle size={12}/></motion.button>
                             </>}
                             {o.status==='CONFIRMED' && <>
-                              <motion.button className="btn btn-success btn-xs" whileHover={{ scale:1.05 }} onClick={()=>handleAction(o.id,'deliver','🚚 Delivered!')}><Truck size={12}/> Deliver</motion.button>
+                              {canDeliver ? (
+                                <motion.button className="btn btn-success btn-xs" whileHover={{ scale:1.05 }} onClick={()=>handleAction(o.id,'deliver','🚚 Delivered!')}><Truck size={12}/> Deliver</motion.button>
+                              ) : (
+                                <span style={{ fontSize:11, color:'var(--accent-orange)', fontWeight:600, padding:'4px 8px', background:'rgba(245, 158, 11, 0.1)', borderRadius:4 }}>Waiting for Stock</span>
+                              )}
                               <motion.button className="btn btn-ghost btn-xs" whileHover={{ scale:1.05 }} onClick={()=>handleAction(o.id,'cancel','Cancelled')} style={{ color:'var(--accent-red)' }}><XCircle size={12}/></motion.button>
                             </>}
                             {['DELIVERED','CANCELLED'].includes(o.status) && <span style={{ fontSize:12, color:'var(--text-muted)' }}>—</span>}

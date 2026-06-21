@@ -12,7 +12,8 @@ router.get('/', async (req, res) => {
           'product_id', soi.product_id,
           'product_name', p.name,
           'quantity', soi.quantity,
-          'sales_price', p.sales_price
+          'sales_price', p.sales_price,
+          'on_hand_qty', p.on_hand_qty
         )) AS items
        FROM sales_orders so
        LEFT JOIN sales_order_items soi ON soi.sales_order_id = so.id
@@ -64,7 +65,12 @@ router.post('/', async (req, res) => {
     }
 
     await client.query('COMMIT');
-    res.status(201).json({ ...orderResult.rows[0], items });
+    
+    // Automatically trigger constraint check and PO/MO generation
+    const { autoProcessSalesOrder } = require('../services/orchestrator');
+    const autoResult = await autoProcessSalesOrder(orderId);
+
+    res.status(201).json({ ...orderResult.rows[0], items, autoMessage: autoResult.message, missingStock: autoResult.missingStock });
   } catch (err) {
     await client.query('ROLLBACK');
     res.status(500).json({ error: err.message });
@@ -73,40 +79,14 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PATCH /api/sales/:id/confirm — confirm order (reserves stock)
+// PATCH /api/sales/:id/confirm — confirm order (checks stock, generates PO/MO if short)
+const { autoProcessSalesOrder } = require('../services/orchestrator');
 router.patch('/:id/confirm', async (req, res) => {
-  const client = await pool.connect();
   try {
-    await client.query('BEGIN');
-
-    const order = await client.query('SELECT * FROM sales_orders WHERE id = $1', [req.params.id]);
-    if (order.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
-    if (order.rows[0].status !== 'DRAFT') return res.status(400).json({ error: 'Only DRAFT orders can be confirmed' });
-
-    const items = await client.query('SELECT * FROM sales_order_items WHERE sales_order_id = $1', [req.params.id]);
-
-    // Reserve stock for each item
-    for (const item of items.rows) {
-      const product = await client.query('SELECT * FROM products WHERE id = $1', [item.product_id]);
-      const available = product.rows[0].on_hand_qty - product.rows[0].reserved_qty;
-      if (available < item.quantity) {
-        await client.query('ROLLBACK');
-        return res.status(400).json({ error: `Insufficient stock for product id ${item.product_id}` });
-      }
-      await client.query(
-        'UPDATE products SET reserved_qty = reserved_qty + $1 WHERE id = $2',
-        [item.quantity, item.product_id]
-      );
-    }
-
-    await client.query('UPDATE sales_orders SET status = $1 WHERE id = $2', ['CONFIRMED', req.params.id]);
-    await client.query('COMMIT');
-    res.json({ message: 'Order confirmed, stock reserved' });
+    const result = await autoProcessSalesOrder(req.params.id);
+    res.json(result);
   } catch (err) {
-    await client.query('ROLLBACK');
     res.status(500).json({ error: err.message });
-  } finally {
-    client.release();
   }
 });
 
@@ -173,17 +153,6 @@ router.patch('/:id/cancel', async (req, res) => {
     res.status(500).json({ error: err.message });
   } finally {
     client.release();
-  }
-});
-
-// PATCH /api/sales/:id/automate — fully automated fulfillment
-const { autoProcessSalesOrder } = require('../services/orchestrator');
-router.patch('/:id/automate', async (req, res) => {
-  try {
-    const result = await autoProcessSalesOrder(req.params.id);
-    res.json(result);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
   }
 });
 

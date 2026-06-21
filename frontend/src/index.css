@@ -664,16 +664,20 @@ tbody td:first-child { color: var(--text-primary); font-weight: 500; }
   font-weight: 500;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   min-width: 280px;
   backdrop-filter: blur(20px);
-  border: 1px solid;
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.05);
   box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+  pointer-events: auto;
+  white-space: pre-wrap;
 }
 
 .toast-success { background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.3); color: #34d399; }
 .toast-error   { background: rgba(239,68,68,0.15);  border-color: rgba(239,68,68,0.3);  color: #f87171; }
 .toast-info    { background: rgba(20, 184, 166, 0.15); border-color: rgba(79,142,247,0.3); color: #60a5fa; }
+.toast-warning { background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.3); color: #fbbf24; }
 
 /* ─── Chart Container ────────────────────────────────────── */
 .chart-wrapper {
